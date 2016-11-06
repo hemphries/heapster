@@ -36,6 +36,7 @@ import (
 	"k8s.io/heapster/metrics/processors"
 	"k8s.io/heapster/metrics/sinks"
 	"k8s.io/heapster/metrics/sources"
+	"k8s.io/heapster/metrics/util"
 	"k8s.io/heapster/version"
 	kube_api "k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/client/cache"
@@ -55,6 +56,7 @@ var (
 	argSources          flags.Uris
 	argSinks            flags.Uris
 	argHistoricalSource = flag.String("historical_source", "", "which source type to use for the historical API (should be exactly the same as one of the sink URIs), or empty to disable the historical API")
+	argLabelSeperator = flag.String("label_seperator", ",", "seperator used for joing labels")
 )
 
 func main() {
@@ -62,6 +64,7 @@ func main() {
 	flag.Var(&argSources, "source", "source(s) to watch")
 	flag.Var(&argSinks, "sink", "external sink(s) that receive data")
 	flag.Parse()
+	setLabelSeperator()
 	setMaxProcs()
 	glog.Infof(strings.Join(os.Args, " "))
 	glog.Infof("Heapster version %v", version.HeapsterVersion)
@@ -299,4 +302,8 @@ func setMaxProcs() {
 	if actualNumProcs != numProcs {
 		glog.Warningf("Specified max procs of %d but using %d", numProcs, actualNumProcs)
 	}
+}
+
+func setLabelSeperator() {
+	util.SetLabelSeperator(*argLabelSeperator)
 }
