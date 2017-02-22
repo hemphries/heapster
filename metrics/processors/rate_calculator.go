@@ -15,6 +15,8 @@
 package processors
 
 import (
+	"reflect"
+
 	"k8s.io/heapster/metrics/core"
 
 	"github.com/golang/glog"
@@ -53,29 +55,68 @@ func (this *RateCalculator) Process(batch *core.DataBatch) (*core.DataBatch, err
 				continue
 			}
 
-			for metricName, targetMetric := range this.rateMetricsMapping {
-				metricValNew, foundNew := newMs.MetricValues[metricName]
-				metricValOld, foundOld := oldMs.MetricValues[metricName]
-				if foundNew && foundOld {
-					if metricName == core.MetricCpuUsage.MetricDescriptor.Name {
-						// cpu/usage values are in nanoseconds; we want to have it in millicores (that's why constant 1000 is here).
-						newVal := 1000 * (metricValNew.IntValue - metricValOld.IntValue) /
-							(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
+			var metricValNew, metricValOld core.MetricValue
+			var foundNew, foundOld bool
 
-						newMs.MetricValues[targetMetric.MetricDescriptor.Name] = core.MetricValue{
-							ValueType:  core.ValueInt64,
-							MetricType: core.MetricGauge,
-							IntValue:   newVal,
+			for metricName, targetMetric := range this.rateMetricsMapping {
+
+				if metricName == core.MetricDiskIORead.MetricDescriptor.Name || metricName == core.MetricDiskIOWrite.MetricDescriptor.Name {
+					for _, itemNew := range newMs.LabeledMetrics {
+						foundNew, foundOld = false, false
+
+						if itemNew.Name == metricName {
+							metricValNew, foundNew = itemNew.MetricValue, true
+
+							for _, itemOld := range oldMs.LabeledMetrics {
+								if itemOld.Name == metricName && reflect.DeepEqual(itemOld.Labels, itemNew.Labels) {
+									metricValOld, foundOld = itemOld.MetricValue, true
+									break
+								}
+							}
 						}
 
-					} else if targetMetric.MetricDescriptor.ValueType == core.ValueFloat {
-						newVal := 1e9 * float32(metricValNew.IntValue-metricValOld.IntValue) /
-							float32(newMs.ScrapeTime.UnixNano()-oldMs.ScrapeTime.UnixNano())
+						if foundNew && foundOld {
+							if targetMetric.MetricDescriptor.ValueType == core.ValueFloat {
+								newVal := 1e9 * float32(metricValNew.IntValue-metricValOld.IntValue) /
+									float32(newMs.ScrapeTime.UnixNano()-oldMs.ScrapeTime.UnixNano())
 
-						newMs.MetricValues[targetMetric.MetricDescriptor.Name] = core.MetricValue{
-							ValueType:  core.ValueFloat,
-							MetricType: core.MetricGauge,
-							FloatValue: newVal,
+								newMs.LabeledMetrics = append(newMs.LabeledMetrics, core.LabeledMetric{
+									Name:   targetMetric.MetricDescriptor.Name,
+									Labels: itemNew.Labels,
+									MetricValue: core.MetricValue{
+										ValueType:  core.ValueFloat,
+										MetricType: core.MetricGauge,
+										FloatValue: newVal,
+									},
+								})
+							}
+						}
+					}
+				} else {
+					metricValNew, foundNew = newMs.MetricValues[metricName]
+					metricValOld, foundOld = oldMs.MetricValues[metricName]
+
+					if foundNew && foundOld {
+						if metricName == core.MetricCpuUsage.MetricDescriptor.Name {
+							// cpu/usage values are in nanoseconds; we want to have it in millicores (that's why constant 1000 is here).
+							newVal := 1000 * (metricValNew.IntValue - metricValOld.IntValue) /
+								(newMs.ScrapeTime.UnixNano() - oldMs.ScrapeTime.UnixNano())
+
+							newMs.MetricValues[targetMetric.MetricDescriptor.Name] = core.MetricValue{
+								ValueType:  core.ValueInt64,
+								MetricType: core.MetricGauge,
+								IntValue:   newVal,
+							}
+
+						} else if targetMetric.MetricDescriptor.ValueType == core.ValueFloat {
+							newVal := 1e9 * float32(metricValNew.IntValue-metricValOld.IntValue) /
+								float32(newMs.ScrapeTime.UnixNano()-oldMs.ScrapeTime.UnixNano())
+
+							newMs.MetricValues[targetMetric.MetricDescriptor.Name] = core.MetricValue{
+								ValueType:  core.ValueFloat,
+								MetricType: core.MetricGauge,
+								FloatValue: newVal,
+							}
 						}
 					}
 				}

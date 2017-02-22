@@ -15,6 +15,10 @@ Heapster exports the following metrics to its backends.
 | filesystem/usage | Total number of bytes consumed on a filesystem. |
 | filesystem/limit | The total size of filesystem in bytes. |
 | filesystem/available | The number of available bytes remaining in a the filesystem |
+| disk/io_read_bytes | Number of bytes read from a disk partition |
+| disk/io_write_bytes | Number of bytes written to a disk partition |
+| disk/io_read_bytes_rate | Number of bytes read from a disk partition per second |
+| disk/io_write_bytes_rate | Number of bytes written to a disk partition per second |
 | memory/limit | Memory hard limit in bytes. |
 | memory/major_page_faults | Number of major page faults. |
 | memory/major_page_faults_rate | Number of major page faults per second. |
@@ -54,7 +58,7 @@ Heapster tags each metric with the following labels.
 | hostname       | Hostname where the container ran                                              |
 | labels         | Comma-separated(Default) list of user-provided labels. Format is 'key:value'  |
 | namespace_id   | UID of the namespace of a Pod                                                 |
-| resource_id    | A unique identifier used to differentiate multiple metrics of the same type. e.x. Fs partitions under filesystem/usage | 
+| resource_id    | A unique identifier used to differentiate multiple metrics of the same type. e.x. Fs partitions under filesystem/usage, disk major:minor number under disk/io_read_bytes |
 
 **Note**
   * Label separator can be configured with Heapster `--label-seperator`. Comma-seperated label pairs is fine until we use [Bosun](http://bosun.org) as alert system and use `group by labels` to search for labels.
