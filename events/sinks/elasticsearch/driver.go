@@ -47,6 +47,7 @@ type EsSinkPoint struct {
 	Source                   interface{}
 	FirstOccurrenceTimestamp time.Time
 	LastOccurrenceTimestamp  time.Time
+	EventTimestamp           time.Time
 	Message                  string
 	Reason                   string
 	Type                     string
@@ -57,6 +58,7 @@ func eventToPoint(event *kube_api.Event, clusterName string) (*EsSinkPoint, erro
 	point := EsSinkPoint{
 		FirstOccurrenceTimestamp: event.FirstTimestamp.Time.UTC(),
 		LastOccurrenceTimestamp:  event.LastTimestamp.Time.UTC(),
+		EventTimestamp:           event.LastTimestamp.Time.UTC(),
 		Message:                  event.Message,
 		Reason:                   event.Reason,
 		Type:                     event.Type,
@@ -67,11 +69,16 @@ func eventToPoint(event *kube_api.Event, clusterName string) (*EsSinkPoint, erro
 		EventTags: map[string]string{
 			"eventID":      string(event.UID),
 			"cluster_name": clusterName,
+			"eventType":    event.Type,
+			"eventKind":    event.InvolvedObject.Kind,
+			"eventReason":  event.Reason,
+			"eventMessage": event.Message,
 		},
 	}
 	if event.InvolvedObject.Kind == "Pod" {
 		point.EventTags[core.LabelPodId.Key] = string(event.InvolvedObject.UID)
 		point.EventTags[core.LabelPodName.Key] = event.InvolvedObject.Name
+		point.EventTags[core.LabelPodNamespace.Key] = event.InvolvedObject.Namespace
 	}
 	point.EventTags[core.LabelHostname.Key] = event.Source.Host
 	return &point, nil

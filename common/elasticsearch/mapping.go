@@ -202,6 +202,22 @@ var mapping = `{
       "properties": {
         "EventTags": {
           "properties": {
+            "eventType": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "eventKind": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "eventReason": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "eventMessage": {
+              "type": "string",
+              "index": "analyzed"
+            },
             "eventID": {
               "type": "string",
               "index": "not_analyzed"
@@ -284,6 +300,10 @@ var mapping = `{
           }
         },
         "FirstOccurrenceTimestamp": {
+          "type": "date",
+          "format": "strict_date_optional_time||epoch_millis"
+        },
+        "EventTimestamp": {
           "type": "date",
           "format": "strict_date_optional_time||epoch_millis"
         },
