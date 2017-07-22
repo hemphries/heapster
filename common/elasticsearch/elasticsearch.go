@@ -22,8 +22,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/pborman/uuid"
 
-	"gopkg.in/olivere/elastic.v3"
 	"os"
+
+	"gopkg.in/olivere/elastic.v3"
 )
 
 const (
@@ -41,8 +42,8 @@ type ElasticSearchService struct {
 func (esSvc *ElasticSearchService) Index(date time.Time) string {
 	return date.Format(fmt.Sprintf("%s-2006.01.02", esSvc.baseIndex))
 }
-func (esSvc *ElasticSearchService) IndexAlias(date time.Time, typeName string) string {
-	return date.Format(fmt.Sprintf("%s-%s-2006.01.02", esSvc.baseIndex, typeName))
+func (esSvc *ElasticSearchService) IndexAlias(typeName string) string {
+	return fmt.Sprintf("%s-%s", esSvc.baseIndex, typeName)
 }
 
 func (esSvc *ElasticSearchService) FlushData() error {
@@ -77,9 +78,9 @@ func (esSvc *ElasticSearchService) SaveData(date time.Time, typeName string, sin
 	if err != nil {
 		return err
 	}
-	aliasName := esSvc.IndexAlias(date, typeName)
+	aliasName := esSvc.IndexAlias(typeName)
 	if !aliases.Indices[indexName].HasAlias(aliasName) {
-		createAlias, err := esSvc.EsClient.Alias().Add(indexName, esSvc.IndexAlias(date, typeName)).Do()
+		createAlias, err := esSvc.EsClient.Alias().Add(indexName, esSvc.IndexAlias(typeName)).Do()
 		if err != nil {
 			return err
 		}
