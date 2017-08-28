@@ -286,13 +286,17 @@ var MetricNetworkRx = Metric{
 		return spec.HasNetwork
 	},
 	GetValue: func(c *cadvisor.ContainerInfo, stat *cadvisor.ContainerStats) MetricValue {
+		var rxBytes int64 = 0
+		for _, interfaceStat := range stat.Network.Interfaces {
+			rxBytes += int64(interfaceStat.RxBytes)
+		}
 		var metricValue = MetricValue{
 			ValueType:  ValueInt64,
 			MetricType: MetricCumulative,
 			IntValue:   0,
 		}
 		if !metrics.IsNode(c) {
-			metricValue.IntValue = int64(stat.Network.RxBytes)
+			metricValue.IntValue = rxBytes
 		}
 		return metricValue
 	},
@@ -310,13 +314,17 @@ var MetricNetworkRxErrors = Metric{
 		return spec.HasNetwork
 	},
 	GetValue: func(c *cadvisor.ContainerInfo, stat *cadvisor.ContainerStats) MetricValue {
+		var rxErrors int64 = 0
+		for _, interfaceStat := range stat.Network.Interfaces {
+			rxErrors += int64(interfaceStat.RxErrors)
+		}
 		var metricValue = MetricValue{
 			ValueType:  ValueInt64,
 			MetricType: MetricCumulative,
 			IntValue:   0,
 		}
 		if !metrics.IsNode(c) {
-			metricValue.IntValue = int64(stat.Network.RxErrors)
+			metricValue.IntValue = rxErrors
 		}
 		return metricValue
 	},
@@ -334,13 +342,17 @@ var MetricNetworkTx = Metric{
 		return spec.HasNetwork
 	},
 	GetValue: func(c *cadvisor.ContainerInfo, stat *cadvisor.ContainerStats) MetricValue {
+		var txBytes int64 = 0
+		for _, interfaceStat := range stat.Network.Interfaces {
+			txBytes += int64(interfaceStat.TxBytes)
+		}
 		var metricValue = MetricValue{
 			ValueType:  ValueInt64,
 			MetricType: MetricCumulative,
 			IntValue:   0,
 		}
 		if !metrics.IsNode(c) {
-			metricValue.IntValue = int64(stat.Network.TxBytes)
+			metricValue.IntValue = txBytes
 		}
 		return metricValue
 	},
@@ -358,13 +370,17 @@ var MetricNetworkTxErrors = Metric{
 		return spec.HasNetwork
 	},
 	GetValue: func(c *cadvisor.ContainerInfo, stat *cadvisor.ContainerStats) MetricValue {
+		var txErrors int64 = 0
+		for _, interfaceStat := range stat.Network.Interfaces {
+			txErrors += int64(interfaceStat.TxErrors)
+		}
 		var metricValue = MetricValue{
 			ValueType:  ValueInt64,
 			MetricType: MetricCumulative,
 			IntValue:   0,
 		}
 		if !metrics.IsNode(c) {
-			metricValue.IntValue = int64(stat.Network.TxErrors)
+			metricValue.IntValue = txErrors
 		}
 		return metricValue
 	},

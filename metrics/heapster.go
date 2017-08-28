@@ -56,7 +56,7 @@ var (
 	argSources          flags.Uris
 	argSinks            flags.Uris
 	argHistoricalSource = flag.String("historical_source", "", "which source type to use for the historical API (should be exactly the same as one of the sink URIs), or empty to disable the historical API")
-	argLabelSeperator = flag.String("label_seperator", ",", "seperator used for joing labels")
+	argLabelSeperator   = flag.String("label_seperator", ",", "seperator used for joing labels")
 )
 
 func main() {
