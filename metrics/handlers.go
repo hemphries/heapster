@@ -15,6 +15,8 @@
 package main
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/pprof"
 	"strings"
@@ -62,6 +64,32 @@ func setupHandlers(metricSink *metricsink.MetricSink, podLister *cache.StoreToPo
 	// Setup pporf handlers.
 	ws := new(restful.WebService).Path(pprofBasePath)
 	ws.Route(ws.GET("/{subpath:*}").To(metrics.InstrumentRouteFunc("pprof", handlePprofEndpoint))).Doc("pprof endpoint")
+	wsContainer.Add(ws)
+
+	return wsContainer
+}
+
+func setupNotifyHandler(notificationChan chan<- core.NodeEvent) http.Handler {
+	wsContainer := restful.NewContainer()
+	wsContainer.EnableContentEncoding(true)
+
+	handleNotify := func(req *restful.Request, resp *restful.Response) {
+		decoder := json.NewDecoder(req.Request.Body)
+		event := new(core.NodeEvent)
+		err := decoder.Decode(&event)
+		if err != nil {
+			io.WriteString(resp.ResponseWriter, `{"data": {"status": "failed"},"error": "internal errors."}`)
+			return
+		}
+		select {
+		case notificationChan <- *event:
+		default:
+		}
+		io.WriteString(resp.ResponseWriter, `{"data": {"status": "successful"},"error": ""}`)
+	}
+
+	ws := new(restful.WebService)
+	ws.Route(ws.POST("/notify").Consumes("application/json").To(handleNotify)).Doc("nodes nofity")
 	wsContainer.Add(ws)
 
 	return wsContainer

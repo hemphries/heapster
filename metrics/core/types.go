@@ -137,6 +137,23 @@ type MetricsSource interface {
 	ScrapeMetrics(start, end time.Time) *DataBatch
 }
 
+type EventType int
+
+const (
+	EventAdd    EventType = 0
+	EventDelete EventType = 1
+)
+
+type NodeEvent struct {
+	NodeIP string
+	Event  EventType
+}
+
+type FilteredMetricsSource interface {
+	MetricsSource
+	GetNotifyChan() chan<- NodeEvent
+}
+
 // Provider of list of sources to be scaped.
 type MetricsSourceProvider interface {
 	GetMetricsSources() []MetricsSource

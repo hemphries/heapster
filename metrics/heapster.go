@@ -81,7 +81,8 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Failed to create source provide: %v", err)
 	}
-	sourceManager, err := sources.NewSourceManager(sourceProvider, sources.DefaultMetricsScrapeTimeout)
+	//sourceManager, err := sources.NewSourceManager(sourceProvider, sources.DefaultMetricsScrapeTimeout)
+	sourceManager, err := sources.NewFilteredSourceManager(sourceProvider, sources.DefaultMetricsScrapeTimeout)
 	if err != nil {
 		glog.Fatalf("Failed to create source manager: %v", err)
 	}
@@ -205,6 +206,7 @@ func main() {
 	manager.Start()
 
 	handler := setupHandlers(metricSink, podLister, nodeLister, historicalSource)
+	notifyHandler := setupNotifyHandler(sourceManager.GetNotifyChan())
 	addr := fmt.Sprintf("%s:%d", *argIp, *argPort)
 	glog.Infof("Starting heapster on port %d", *argPort)
 
@@ -226,6 +228,7 @@ func main() {
 		}
 		mux.Handle("/", handler)
 		mux.Handle("/metrics", promHandler)
+		mux.Handle("/nofity", notifyHandler)
 
 		// If allowed users is set, then we need to enable Client Authentication
 		if len(*argAllowedUsers) > 0 {
@@ -242,6 +245,7 @@ func main() {
 	} else {
 		mux.Handle("/", handler)
 		mux.Handle("/metrics", promHandler)
+		mux.Handle("/notify", notifyHandler)
 		glog.Fatal(http.ListenAndServe(addr, mux))
 	}
 }
